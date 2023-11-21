@@ -1,13 +1,18 @@
 from fastapi import FastAPI, File, UploadFile
 import uvicorn
 import numpy as np
+import joblib
 from io import BytesIO
 from PIL import Image
-import tensorflow as tf
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import pandas as pd
+
 
 # MODEL = tf.keras.models.load_model('../saved_models/1')
 CLASS_NAMES = ["Early Blight", "Late Blight", "Healthy"]
+model = joblib.load('xgboost_model.joblib')
+
 
 app = FastAPI()
 
@@ -24,6 +29,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class Item(BaseModel):
+    # Define the input features as per your model's requirements
+    artists_0: int
+    artists_1: int
+    artists_2: int
+    artists_3: int
+    artists_4: int
+    album_name_0: int
+    album_name_1: int
+    album_name_2: int
+    album_name_3: int
+    album_name_4: int
+    track_name_1: int
+    track_name_2: int
+    track_name_3: int
+    track_name_4: int
+    duration_ms: float
+    explicit: float
+    danceability: float
+    energy: float
+    key: float
+    mode: int
+    speechiness: float
+    instrumentalness: float
+    liveness: float
+    valence: float
+    tempo: float
+    time_signature: float
+    track_genre_1: int
+    speechiness_type_Low: int
+
+
 @app.get('/ping')
 async def ping():
     return 'Hello, I am alive'
@@ -35,13 +72,11 @@ async def read_file_as_image(data) -> np.ndarray:
 
 
 @app.post('/api/predict')
-async def predict(file: UploadFile = File(...)):
-    image = await read_file_as_image(await file.read())
-    # predictions = MODEL.predict(np.expand_dims(image, 0))
-    return {
-        # 'class': CLASS_NAMES[np.argmax(predictions[0])],
-        # 'confidence': float(np.max(predictions[0]))
-    }
+async def predict(item: Item):
+    input_data = pd.DataFrame([item.model_dump()])
+    prediction = model.predict(input_data)
+    print(prediction)
+    return {"prediction": prediction[0].item()}
 
 
 if __name__ == "__main__":
