@@ -61,7 +61,7 @@ class Item(BaseModel):
     speechiness_type_Low: int
 
 
-@app.get('/ping')
+@app.get('/api/ping')
 async def ping():
     return 'Hello, I am alive'
 
@@ -73,6 +73,7 @@ async def read_file_as_image(data) -> np.ndarray:
 
 @app.post('/api/predict')
 async def predict(item: Item):
+    print('item recieved')
     input_data = pd.DataFrame([item.model_dump()])
     prediction = model.predict(input_data)
     print(prediction)

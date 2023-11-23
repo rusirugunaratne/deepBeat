@@ -10,22 +10,97 @@ import {
   MenuItem,
   SelectChangeEvent,
   Button,
-} from "@mui/material";
-import deepBeatLogo from "../../assets/deep_beat_logo.png";
-import TextField from "@mui/material/TextField";
-import React from "react";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+} from "@mui/material"
+import deepBeatLogo from "../../assets/deep_beat_logo.png"
+import TextField from "@mui/material/TextField"
+import React from "react"
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"
+import { genres } from "../../consts/genres"
+import useForm from "../../hooks/useForms"
+import { pitches } from "../../consts/pitches"
+import { timeSignatures } from "../../consts/timeSignatures"
+import { ENDPOINTS, createAPIEndpoint } from "../../api/api"
 
-function Prediction() {
-  function valuetext(value: number) {
-    return `${value}°C`;
+function convertToNumeric(obj: Record<string, any>): Record<string, number> {
+  const result: Record<string, number> = {}
+
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key]
+      result[key] = typeof value === "number" ? value : parseFloat(value) || 0
+      result[key] = parseFloat(value)
+    }
   }
 
-  const [age, setAge] = React.useState("");
+  return result
+}
+
+function Prediction() {
+  const getFreshModel = () => ({
+    artists_0: 0,
+    artists_1: 0,
+    artists_2: 0,
+    artists_3: 0,
+    artists_4: 0,
+    album_name_0: 0,
+    album_name_1: 0,
+    album_name_2: 0,
+    album_name_3: 0,
+    album_name_4: 0,
+    track_name_1: 0,
+    track_name_2: 0,
+    track_name_3: 0,
+    track_name_4: 0,
+    duration_ms: null,
+    explicit: 0,
+    danceability: 0.0,
+    energy: 0.0,
+    key: null,
+    mode: null,
+    speechiness: 0.0,
+    instrumentalness: 0.0,
+    liveness: 0.0,
+    valence: 0.0,
+    tempo: null,
+    time_signature: null,
+    track_genre_1: null,
+    speechiness_type_Low: 0,
+  })
+
+  const { values, setValues, errors, setErrors, handleInputChange } =
+    useForm(getFreshModel)
+
+  function valuetext(value: number) {
+    return `${value}°C`
+  }
+
+  const [age, setAge] = React.useState("")
 
   const handleChange = (event: SelectChangeEvent) => {
-    setAge(event.target.value as string);
-  };
+    setAge(event.target.value as string)
+  }
+
+  function objectToFormData(obj: Record<string, any>): FormData {
+    const formData = new FormData()
+
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        formData.append(key, obj[key].toString())
+      }
+    }
+
+    return formData
+  }
+
+  const predict = () => {
+    const numericValues = convertToNumeric(values)
+    const formData = objectToFormData(numericValues)
+    createAPIEndpoint(ENDPOINTS.predict)
+      .post(numericValues)
+      .then((val) => console.log("predection", val))
+  }
+
+  console.log("values", values)
 
   return (
     <>
@@ -58,11 +133,23 @@ function Prediction() {
           <TextField
             id='outlined-basic'
             label='Duration in milliseconds'
+            value={values.duration_ms}
+            onChange={handleInputChange}
+            name='duration_ms'
+            type='number'
             variant='outlined'
           />
 
           <FormControlLabel
-            control={<Checkbox defaultChecked />}
+            control={
+              <Checkbox
+                value={values.duration_ms}
+                onChange={(e) => {
+                  setValues({ ...values, explicit: e.target.checked ? 1 : 0 })
+                }}
+                defaultChecked
+              />
+            }
             label='Explicit'
           />
 
@@ -73,7 +160,10 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            // getAriaValueText={valuetext}
+            value={values.danceability}
+            onChange={handleInputChange}
+            name='danceability'
             step={0.1}
             marks
             min={0}
@@ -88,7 +178,10 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            // getAriaValueText={valuetext}
+            value={values.energy}
+            onChange={handleInputChange}
+            name='energy'
             step={0.1}
             marks
             min={0}
@@ -101,13 +194,14 @@ function Prediction() {
             <Select
               labelId='demo-simple-select-label'
               id='demo-simple-select'
-              value={age}
               label='Key'
-              onChange={handleChange}
+              value={values.key}
+              onChange={handleInputChange}
+              name='key'
             >
-              <MenuItem value={10}>Ten</MenuItem>
-              <MenuItem value={20}>Twenty</MenuItem>
-              <MenuItem value={30}>Thirty</MenuItem>
+              {pitches.map((pitch, index) => {
+                return <MenuItem value={index}>{pitch}</MenuItem>
+              })}
             </Select>
           </FormControl>
         </Stack>
@@ -122,13 +216,13 @@ function Prediction() {
             <Select
               labelId='demo-simple-select-label'
               id='demo-simple-select'
-              value={age}
-              label='Key'
-              onChange={handleChange}
+              label='Mode'
+              value={values.mode}
+              onChange={handleInputChange}
+              name='mode'
             >
-              <MenuItem value={10}>Ten</MenuItem>
-              <MenuItem value={20}>Twenty</MenuItem>
-              <MenuItem value={30}>Thirty</MenuItem>
+              <MenuItem value={1}>Major</MenuItem>
+              <MenuItem value={0}>Minor</MenuItem>
             </Select>
           </FormControl>
           <Typography id='input-slider' gutterBottom>
@@ -137,7 +231,10 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            // getAriaValueText={valuetext}
+            value={values.speechiness}
+            onChange={handleInputChange}
+            name='speechiness'
             step={0.1}
             marks
             min={0}
@@ -150,7 +247,9 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            value={values.instrumentalness}
+            onChange={handleInputChange}
+            name='instrumentalness'
             step={0.1}
             marks
             min={0}
@@ -163,7 +262,9 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            value={values.liveness}
+            onChange={handleInputChange}
+            name='liveness'
             step={0.1}
             marks
             min={0}
@@ -177,27 +278,68 @@ function Prediction() {
           <Slider
             aria-label='Small steps'
             defaultValue={0.5}
-            getAriaValueText={valuetext}
+            value={values.valence}
+            onChange={handleInputChange}
+            name='valence'
             step={0.1}
             marks
             min={0}
             max={1}
             valueLabelDisplay='auto'
           />
-          <TextField id='outlined-basic' label='Tempo' variant='outlined' />
           <TextField
             id='outlined-basic'
-            label='Time Signature'
+            label='Tempo (BPM)'
             variant='outlined'
+            value={values.tempo}
+            onChange={handleInputChange}
+            name='tempo'
           />
-          <TextField id='outlined-basic' label='Genre' variant='outlined' />
-          <Button endIcon={<ArrowForwardIosIcon />} variant='contained'>
+          <FormControl fullWidth>
+            <InputLabel id='demo-simple-select-label'>
+              Time Signature
+            </InputLabel>
+            <Select
+              labelId='demo-simple-select-label'
+              id='demo-simple-select'
+              // value={age}
+              label='Time Signature'
+              value={values.time_signature}
+              onChange={handleInputChange}
+              name='time_signature'
+            >
+              {timeSignatures.map(({ value, displayText }) => {
+                return <MenuItem value={value}>{displayText}</MenuItem>
+              })}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel id='demo-simple-select-label'>Genre</InputLabel>
+            <Select
+              labelId='demo-simple-select-label'
+              id='demo-simple-select'
+              // value={age}
+              label='Genre'
+              value={values.track_genre_1}
+              onChange={handleInputChange}
+              name='track_genre_1'
+            >
+              {genres.map((genre, index) => {
+                return <MenuItem value={index}>{genre}</MenuItem>
+              })}
+            </Select>
+          </FormControl>
+          <Button
+            onClick={() => predict()}
+            endIcon={<ArrowForwardIosIcon />}
+            variant='contained'
+          >
             Predict
           </Button>
         </Stack>
       </Stack>
     </>
-  );
+  )
 }
 
-export default Prediction;
+export default Prediction
