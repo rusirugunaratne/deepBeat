@@ -10,16 +10,22 @@ import {
   MenuItem,
   SelectChangeEvent,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material"
 import deepBeatLogo from "../../assets/deep_beat_logo.png"
 import TextField from "@mui/material/TextField"
-import React from "react"
+import React, { useState } from "react"
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"
 import { genres } from "../../consts/genres"
 import useForm from "../../hooks/useForms"
 import { pitches } from "../../consts/pitches"
 import { timeSignatures } from "../../consts/timeSignatures"
 import { ENDPOINTS, createAPIEndpoint } from "../../api/api"
+import animation from "../../assets/Music (1).gif"
 
 function convertToNumeric(obj: Record<string, any>): Record<string, number> {
   const result: Record<string, number> = {}
@@ -36,6 +42,9 @@ function convertToNumeric(obj: Record<string, any>): Record<string, number> {
 }
 
 function Prediction() {
+  const [prediction, setPrediction] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+
   const getFreshModel = () => ({
     artists_0: 0,
     artists_1: 0,
@@ -97,7 +106,20 @@ function Prediction() {
     const formData = objectToFormData(numericValues)
     createAPIEndpoint(ENDPOINTS.predict)
       .post(numericValues)
-      .then((val) => console.log("predection", val))
+      .then((response) => {
+        const rawPredictionValue = response?.data?.prediction
+        const roundedPredictionValue =
+          typeof rawPredictionValue === "number"
+            ? rawPredictionValue.toFixed(2)
+            : rawPredictionValue
+        setPrediction(roundedPredictionValue)
+        setDialogOpen(true)
+      })
+  }
+
+  const handleDialogClose = () => {
+    setDialogOpen(false)
+    setPrediction(null)
   }
 
   console.log("values", values)
@@ -338,6 +360,26 @@ function Prediction() {
           </Button>
         </Stack>
       </Stack>
+
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>Predicted Popularity</DialogTitle>
+        <DialogContent>
+          <Stack
+            margin={2}
+            direction='row'
+            justifyContent='center'
+            alignItems='center'
+          >
+            <img height={400} src={animation} alt='' />
+            <Typography variant='h2'>{prediction}%</Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color='primary'>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
