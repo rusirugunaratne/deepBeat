@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  IconButton,
 } from "@mui/material"
 import deepBeatLogo from "../../assets/deep_beat_logo.png"
 import TextField from "@mui/material/TextField"
@@ -26,6 +27,10 @@ import { pitches } from "../../consts/pitches"
 import { timeSignatures } from "../../consts/timeSignatures"
 import { ENDPOINTS, createAPIEndpoint } from "../../api/api"
 import animation from "../../assets/Music (1).gif"
+import GetAppIcon from "@mui/icons-material/GetApp"
+import BarChartIcon from "@mui/icons-material/BarChart"
+import PredictionPlot from "../PredictionPlot/PredictionPlot"
+import DeleteIcon from "@mui/icons-material/Delete"
 
 function convertToNumeric(obj: Record<string, any>): Record<string, number> {
   const result: Record<string, number> = {}
@@ -44,6 +49,11 @@ function convertToNumeric(obj: Record<string, any>): Record<string, number> {
 function Prediction() {
   const [prediction, setPrediction] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [plotDialogOpen, setPlotDialogOpen] = useState(false)
+
+  // Use local storage to store values and predictions
+  const storedData = JSON.parse(localStorage.getItem("predictionData") || "[]")
+  const [predictionData, setPredictionData] = useState(storedData)
 
   const getFreshModel = () => ({
     artists_0: 0,
@@ -114,6 +124,18 @@ function Prediction() {
             : rawPredictionValue
         setPrediction(roundedPredictionValue)
         setDialogOpen(true)
+
+        const newData = {
+          values: numericValues,
+          prediction: roundedPredictionValue,
+          timestamp: Date.now(),
+        }
+        const newPredictionData = [...predictionData, newData]
+        setPredictionData(newPredictionData)
+        localStorage.setItem(
+          "predictionData",
+          JSON.stringify(newPredictionData)
+        )
       })
   }
 
@@ -122,10 +144,21 @@ function Prediction() {
     setPrediction(null)
   }
 
+  const handlePlotDialogClose = () => {
+    setPlotDialogOpen(false)
+  }
+
+  const handleExport = () => {
+    // Log all saved data
+    setPlotDialogOpen(true)
+    console.log("All Saved Data:", predictionData)
+  }
+
   console.log("values", values)
 
   return (
     <>
+      <PredictionPlot predictionData={predictionData} />
       <Stack
         height={"100%"}
         direction='row'
@@ -351,13 +384,31 @@ function Prediction() {
               })}
             </Select>
           </FormControl>
-          <Button
-            onClick={() => predict()}
-            endIcon={<ArrowForwardIosIcon />}
-            variant='contained'
+
+          <Stack
+            direction='row'
+            justifyContent='flex-start'
+            alignItems='center'
+            spacing={1}
           >
-            Predict
-          </Button>
+            <Button
+              onClick={() => predict()}
+              endIcon={<ArrowForwardIosIcon />}
+              variant='contained'
+            >
+              Predict
+            </Button>
+            <Button
+              onClick={() => handleExport()}
+              startIcon={<BarChartIcon />}
+              variant='contained'
+            >
+              ({predictionData.length})
+            </Button>
+            <IconButton color='success' aria-label='delete'>
+              <DeleteIcon />
+            </IconButton>
+          </Stack>
         </Stack>
       </Stack>
 
@@ -376,6 +427,38 @@ function Prediction() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDialogClose} color='primary'>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        maxWidth='lg'
+        open={plotDialogOpen}
+        onClose={handlePlotDialogClose}
+      >
+        <DialogTitle>Predicted Popularity</DialogTitle>
+        <DialogContent style={{ width: "100%", maxWidth: "none" }}>
+          <Stack
+            width={650}
+            direction='column'
+            justifyContent='center'
+            alignItems='center'
+            spacing={2}
+          >
+            <PredictionPlot predictionData={predictionData} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='contained'
+            startIcon={<GetAppIcon />}
+            onClick={handlePlotDialogClose}
+            color='primary'
+          >
+            Export
+          </Button>
+          <Button onClick={handlePlotDialogClose} color='primary'>
             Close
           </Button>
         </DialogActions>
