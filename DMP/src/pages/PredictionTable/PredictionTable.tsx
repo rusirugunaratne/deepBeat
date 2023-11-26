@@ -12,13 +12,17 @@ import { jsPDF } from "jspdf"
 import autoTable from "jspdf-autotable"
 import logo from "../../assets/deep_beat_logo.png"
 
-interface PredictionData {
+interface TransformedPredictionData {
   timestamp: number
   prediction: string
-  values: Record<string, any>
+  duration_ms: number
+  key: number
+  mode: number
+  time_signature: number
+  track_genre_1: number
 }
 
-const columnHelper = createMRTColumnHelper<PredictionData>()
+const columnHelper = createMRTColumnHelper<TransformedPredictionData>()
 
 const columns = [
   columnHelper.accessor("timestamp", {
@@ -29,23 +33,23 @@ const columns = [
     header: "Prediction",
     size: 40,
   }),
-  columnHelper.accessor("values.duration_ms", {
+  columnHelper.accessor("duration_ms", {
     header: "DurationMS",
     size: 40,
   }),
-  columnHelper.accessor("values.key", {
+  columnHelper.accessor("key", {
     header: "Key",
     size: 40,
   }),
-  columnHelper.accessor("values.mode", {
+  columnHelper.accessor("mode", {
     header: "Mode",
     size: 40,
   }),
-  columnHelper.accessor("values.time_signature", {
+  columnHelper.accessor("time_signature", {
     header: "TS",
     size: 40,
   }),
-  columnHelper.accessor("values.track_genre_1", {
+  columnHelper.accessor("track_genre_1", {
     header: "Genre",
     size: 40,
   }),
@@ -53,33 +57,26 @@ const columns = [
 ]
 
 interface PredictionTableProps {
-  predictionData: PredictionData[]
+  predictionData: TransformedPredictionData[]
 }
 
 const PredictionTable: React.FC<PredictionTableProps> = ({
   predictionData,
 }) => {
-  console.log("prediction data", predictionData)
-
-  const handleExportRows = (rows: MRT_Row<PredictionData>[]) => {
+  const handleExportRows = (rows: MRT_Row<TransformedPredictionData>[]) => {
     const doc = new jsPDF()
-    console.log("rows", rows)
     const tableData = rows.map((row) => Object.values(row.original))
-    // const extractedValues = { ...tableData[0] }
-    // tableData.shift()
-    // tableData.splice(2, 0, extractedValues)
-    console.log("tableData", tableData)
     const tableHeaders = columns.map((c) => c.header)
     console.log("table headers", tableHeaders)
-
-    doc.addImage(logo, "PNG", 10, 10, 40, 40)
 
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
     })
 
-    doc.save("mrt-pdf-example.pdf")
+    doc.addImage(logo, "PNG", 170, 100, 40, 40)
+
+    doc.save("DeepBeat Predictions.pdf")
   }
 
   const table = useMaterialReactTable({

@@ -68,7 +68,7 @@ const PredictionPlot: React.FC<PredictionPlotProps> = ({ predictionData }) => {
   }
 
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Line options={options} data={data} />
     </div>
   )

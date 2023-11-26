@@ -34,6 +34,28 @@ import DeleteIcon from "@mui/icons-material/Delete"
 import exportToPDF from "../../utils/ExportToPdf"
 import PredictionTable from "../PredictionTable/PredictionTable"
 
+interface OriginalPredictionData {
+  timestamp: number
+  prediction: string
+  values: {
+    duration_ms: number
+    key: number
+    mode: number
+    time_signature: number
+    track_genre_1: number
+  }
+}
+
+interface TransformedPredictionData {
+  timestamp: number
+  prediction: string
+  duration_ms: number
+  key: number
+  mode: number
+  time_signature: number
+  track_genre_1: number
+}
+
 function convertToNumeric(obj: Record<string, any>): Record<string, number> {
   const result: Record<string, number> = {}
 
@@ -149,30 +171,6 @@ function Prediction() {
           "speechiness_type_Low",
         ]
 
-        // const newData = {
-        //   values: numericValues,
-        //   prediction: roundedPredictionValue,
-        //   timestamp: Date.now(),
-        // }
-
-        // const newValues = featuresToInclude.reduce((acc, feature) => {
-        //   acc[feature] = numericValues[feature];
-        //   return acc;
-        // }, {});
-
-        // const newData = {
-        //   values: newValues,
-        //   prediction: roundedPredictionValue,
-        //   timestamp: Date.now(),
-        // };
-
-        // const newPredictionData = [...predictionData, newData]
-        // setPredictionData(newPredictionData)
-        // localStorage.setItem(
-        //   "predictionData",
-        //   JSON.stringify(newPredictionData)
-        // )
-
         const newValues: Record<string, number | null> =
           featuresToInclude.reduce((acc, feature) => {
             acc[feature] = numericValues[feature]
@@ -220,6 +218,20 @@ function Prediction() {
 
   const handleExportClick = () => {
     exportToPDF(predictionData)
+  }
+
+  const transformData = (
+    originalData: OriginalPredictionData[]
+  ): TransformedPredictionData[] => {
+    return originalData.map((originalItem) => ({
+      timestamp: originalItem.timestamp,
+      prediction: originalItem.prediction,
+      duration_ms: originalItem.values.duration_ms,
+      key: originalItem.values.key,
+      mode: originalItem.values.mode,
+      time_signature: originalItem.values.time_signature,
+      track_genre_1: originalItem.values.track_genre_1,
+    }))
   }
 
   console.log("values", values)
@@ -518,18 +530,10 @@ function Prediction() {
             spacing={2}
           >
             <PredictionPlot predictionData={predictionData} />
-            <PredictionTable predictionData={predictionData} />
+            <PredictionTable predictionData={transformData(predictionData)} />
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button
-            variant='contained'
-            startIcon={<GetAppIcon />}
-            onClick={handleExportClick}
-            color='primary'
-          >
-            Export
-          </Button>
           <Button onClick={handlePlotDialogClose} color='primary'>
             Close
           </Button>
