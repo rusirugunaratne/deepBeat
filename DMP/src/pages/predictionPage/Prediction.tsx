@@ -36,6 +36,8 @@ import exportToPDF from "../../utils/ExportToPdf"
 import PredictionTable from "../PredictionTable/PredictionTable"
 import { columns } from "../../consts/features"
 import ContactSupportIcon from "@mui/icons-material/ContactSupport"
+import { confirmAlert } from "react-confirm-alert"
+import "react-confirm-alert/src/react-confirm-alert.css" // Import css
 
 interface OriginalPredictionData {
   timestamp: number
@@ -84,8 +86,23 @@ function Prediction() {
   const [predictionData, setPredictionData] = useState(storedData)
 
   const clearLocalStorage = () => {
-    localStorage.removeItem("predictionData")
-    setPredictionData([])
+    confirmAlert({
+      title: "Delete All the Prediction Data",
+      message: "Are you sure to do this.",
+      buttons: [
+        {
+          label: "Delete",
+          onClick: () => {
+            localStorage.removeItem("predictionData")
+            setPredictionData([])
+          },
+        },
+        {
+          label: "Cancel",
+          onClick: () => {},
+        },
+      ],
+    })
   }
 
   const getFreshModel = () => ({
@@ -430,6 +447,7 @@ function Prediction() {
             valueLabelDisplay='auto'
           />
           <TextField
+            fullWidth
             id='outlined-basic'
             label='Tempo (BPM)'
             variant='outlined'
