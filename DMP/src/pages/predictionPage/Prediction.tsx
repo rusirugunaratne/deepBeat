@@ -31,6 +31,8 @@ import GetAppIcon from "@mui/icons-material/GetApp"
 import BarChartIcon from "@mui/icons-material/BarChart"
 import PredictionPlot from "../PredictionPlot/PredictionPlot"
 import DeleteIcon from "@mui/icons-material/Delete"
+import exportToPDF from "../../utils/ExportToPdf"
+import PredictionTable from "../PredictionTable/PredictionTable"
 
 function convertToNumeric(obj: Record<string, any>): Record<string, number> {
   const result: Record<string, number> = {}
@@ -54,6 +56,11 @@ function Prediction() {
   // Use local storage to store values and predictions
   const storedData = JSON.parse(localStorage.getItem("predictionData") || "[]")
   const [predictionData, setPredictionData] = useState(storedData)
+
+  const clearLocalStorage = () => {
+    localStorage.removeItem("predictionData")
+    setPredictionData([])
+  }
 
   const getFreshModel = () => ({
     artists_0: 0,
@@ -125,12 +132,69 @@ function Prediction() {
         setPrediction(roundedPredictionValue)
         setDialogOpen(true)
 
-        const newData = {
-          values: numericValues,
+        const featuresToInclude: Array<keyof typeof numericValues> = [
+          "duration_ms",
+          "explicit",
+          "danceability",
+          "energy",
+          "key",
+          "mode",
+          "speechiness",
+          "instrumentalness",
+          "liveness",
+          "valence",
+          "tempo",
+          "time_signature",
+          "track_genre_1",
+          "speechiness_type_Low",
+        ]
+
+        // const newData = {
+        //   values: numericValues,
+        //   prediction: roundedPredictionValue,
+        //   timestamp: Date.now(),
+        // }
+
+        // const newValues = featuresToInclude.reduce((acc, feature) => {
+        //   acc[feature] = numericValues[feature];
+        //   return acc;
+        // }, {});
+
+        // const newData = {
+        //   values: newValues,
+        //   prediction: roundedPredictionValue,
+        //   timestamp: Date.now(),
+        // };
+
+        // const newPredictionData = [...predictionData, newData]
+        // setPredictionData(newPredictionData)
+        // localStorage.setItem(
+        //   "predictionData",
+        //   JSON.stringify(newPredictionData)
+        // )
+
+        const newValues: Record<string, number | null> =
+          featuresToInclude.reduce((acc, feature) => {
+            acc[feature] = numericValues[feature]
+            return acc
+          }, {} as Record<string, number | null>)
+
+        const newData: {
+          values: Record<string, number | null>
+          prediction: string
+          timestamp: number
+        } = {
+          values: newValues,
           prediction: roundedPredictionValue,
           timestamp: Date.now(),
         }
-        const newPredictionData = [...predictionData, newData]
+
+        const newPredictionData: Array<{
+          values: Record<string, number | null>
+          prediction: string
+          timestamp: number
+        }> = [...predictionData, newData]
+
         setPredictionData(newPredictionData)
         localStorage.setItem(
           "predictionData",
@@ -154,11 +218,14 @@ function Prediction() {
     console.log("All Saved Data:", predictionData)
   }
 
+  const handleExportClick = () => {
+    exportToPDF(predictionData)
+  }
+
   console.log("values", values)
 
   return (
     <>
-      <PredictionPlot predictionData={predictionData} />
       <Stack
         height={"100%"}
         direction='row'
@@ -405,7 +472,11 @@ function Prediction() {
             >
               ({predictionData.length})
             </Button>
-            <IconButton color='success' aria-label='delete'>
+            <IconButton
+              onClick={clearLocalStorage}
+              color='success'
+              aria-label='delete'
+            >
               <DeleteIcon />
             </IconButton>
           </Stack>
@@ -440,20 +511,21 @@ function Prediction() {
         <DialogTitle>Predicted Popularity</DialogTitle>
         <DialogContent style={{ width: "100%", maxWidth: "none" }}>
           <Stack
-            width={650}
+            // width={650}
             direction='column'
             justifyContent='center'
             alignItems='center'
             spacing={2}
           >
             <PredictionPlot predictionData={predictionData} />
+            <PredictionTable predictionData={predictionData} />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button
             variant='contained'
             startIcon={<GetAppIcon />}
-            onClick={handlePlotDialogClose}
+            onClick={handleExportClick}
             color='primary'
           >
             Export
