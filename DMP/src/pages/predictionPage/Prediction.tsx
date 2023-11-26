@@ -17,6 +17,7 @@ import {
   DialogActions,
   IconButton,
 } from "@mui/material"
+import Chip from "@mui/material/Chip"
 import deepBeatLogo from "../../assets/deep_beat_logo.png"
 import TextField from "@mui/material/TextField"
 import React, { useState } from "react"
@@ -33,6 +34,8 @@ import PredictionPlot from "../PredictionPlot/PredictionPlot"
 import DeleteIcon from "@mui/icons-material/Delete"
 import exportToPDF from "../../utils/ExportToPdf"
 import PredictionTable from "../PredictionTable/PredictionTable"
+import { columns } from "../../consts/features"
+import ContactSupportIcon from "@mui/icons-material/ContactSupport"
 
 interface OriginalPredictionData {
   timestamp: number
@@ -74,6 +77,7 @@ function Prediction() {
   const [prediction, setPrediction] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [plotDialogOpen, setPlotDialogOpen] = useState(false)
+  const [featureDialogOpen, setFeatureDialogOpen] = useState(false)
 
   // Use local storage to store values and predictions
   const storedData = JSON.parse(localStorage.getItem("predictionData") || "[]")
@@ -208,6 +212,10 @@ function Prediction() {
 
   const handlePlotDialogClose = () => {
     setPlotDialogOpen(false)
+  }
+
+  const handleFeatureDialogClose = () => {
+    setFeatureDialogOpen(false)
   }
 
   const handleExport = () => {
@@ -491,6 +499,14 @@ function Prediction() {
             >
               <DeleteIcon />
             </IconButton>
+
+            <IconButton
+              onClick={() => setFeatureDialogOpen(true)}
+              color='success'
+              aria-label='delete'
+            >
+              <ContactSupportIcon />
+            </IconButton>
           </Stack>
         </Stack>
       </Stack>
@@ -535,6 +551,123 @@ function Prediction() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handlePlotDialogClose} color='primary'>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        maxWidth='lg'
+        open={featureDialogOpen}
+        onClose={handleFeatureDialogClose}
+      >
+        <DialogTitle>Feature Details</DialogTitle>
+        <DialogContent style={{ width: "100%", maxWidth: "none" }}>
+          <Stack
+            direction='row'
+            justifyContent='flex-start'
+            alignItems='flex-start'
+            spacing={5}
+          >
+            <Stack
+              direction='column'
+              justifyContent='flex-start'
+              alignItems='flex-start'
+              spacing={2}
+            >
+              {columns.map((column) => {
+                return (
+                  <>
+                    <Chip
+                      color='success'
+                      label={column.title}
+                      variant='outlined'
+                    />
+                    <Typography>{column.text}</Typography>
+                  </>
+                )
+              })}
+            </Stack>
+
+            <Stack
+              direction='column'
+              justifyContent='flex-start'
+              alignItems='flex-start'
+              spacing={2}
+            >
+              <Typography variant='h5'>Pitches</Typography>
+              {pitches.map((pitch, index) => {
+                return (
+                  <>
+                    <Stack
+                      direction='row'
+                      justifyContent='flex-start'
+                      alignItems='center'
+                      spacing={2}
+                    >
+                      <Chip color='success' label={index} variant='outlined' />
+                      <Typography>{pitch}</Typography>
+                    </Stack>
+                  </>
+                )
+              })}
+            </Stack>
+
+            <Stack
+              direction='column'
+              justifyContent='flex-start'
+              alignItems='flex-start'
+              spacing={2}
+            >
+              <Typography variant='h5'>Genres</Typography>
+              {genres.map((pitch, index) => {
+                return (
+                  <>
+                    <Stack
+                      direction='row'
+                      justifyContent='flex-start'
+                      alignItems='center'
+                      spacing={2}
+                    >
+                      <Chip color='success' label={index} variant='outlined' />
+                      <Typography>{pitch}</Typography>
+                    </Stack>
+                  </>
+                )
+              })}
+            </Stack>
+
+            <Stack
+              direction='column'
+              justifyContent='flex-start'
+              alignItems='flex-start'
+              spacing={2}
+            >
+              <Typography variant='h5'>Time Signatures</Typography>
+              {timeSignatures.map((pitch, index) => {
+                return (
+                  <>
+                    <Stack
+                      direction='row'
+                      justifyContent='flex-start'
+                      alignItems='center'
+                      spacing={2}
+                    >
+                      <Chip
+                        color='success'
+                        label={pitch.value}
+                        variant='outlined'
+                      />
+                      <Typography>{pitch.displayText}</Typography>
+                    </Stack>
+                  </>
+                )
+              })}
+            </Stack>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFeatureDialogClose} color='primary'>
             Close
           </Button>
         </DialogActions>
